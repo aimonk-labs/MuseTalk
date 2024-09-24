@@ -1,10 +1,13 @@
+# task_0:
+#  video_path: "data/video/asian_30_male_1_brian_cox_3min_512x512_2_1034_withaudio.mp4"
+#  audio_path: "data/audio/elevenlabs-2min-audio.wav"
 task_0:
- video_path: "data/video/yongen.mp4"
- audio_path: "data/audio/yongen.wav"
+ video_path: "data/video/american_50_woman_1_brian_cox_50sec_512x512_2_0447_withaudio.mp4"
+ audio_path: "data/audio/elevenlabs-jessica-calm.wav"
 
-task_1:
- video_path: "data/video/sun.mp4"
- audio_path: "data/audio/sun.wav"
- bbox_shift: -7
+# task_1:
+#  video_path: "data/video/sun.mp4"
+#  audio_path: "data/audio/sun.wav"
+#  bbox_shift: -7
   
 

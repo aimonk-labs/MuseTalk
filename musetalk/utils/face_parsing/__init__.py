@@ -43,6 +43,7 @@ class FaceParsing():
             else:
                 img = torch.unsqueeze(img, 0)
             out = self.net(img)[0]
+            # import pdb;pdb.set_trace()
             parsing = out.squeeze(0).cpu().numpy().argmax(0)
             parsing[np.where(parsing>13)] = 0
             parsing[np.where(parsing>=1)] = 255

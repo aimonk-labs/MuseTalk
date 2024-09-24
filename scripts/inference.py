@@ -14,12 +14,19 @@ from musetalk.utils.preprocessing import get_landmark_and_bbox,read_imgs,coord_p
 from musetalk.utils.blending import get_image
 from musetalk.utils.utils import load_all_model
 import shutil
+from fast_gfpgan import FAST_GFGGaner
 
 # load model weights
 audio_processor, vae, unet, pe = load_all_model()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 timesteps = torch.tensor([0], device=device)
-
+model_path="/bv3/debasish_works/MuseTalk/GFPGANv1.4.pth"
+gfpgan=FAST_GFGGaner(
+        model_path=model_path,
+        upscale=1,
+        arch="clean",
+        channel_multiplier=2,
+        bg_upsampler=None,device="cuda") 
 @torch.no_grad()
 def main(args):
     global pe
@@ -63,6 +70,7 @@ def main(args):
             fps = args.fps
         else:
             raise ValueError(f"{video_path} should be a video file, an image file or a directory of images")
+        # import pdb;pdb.set_trace()
 
         #print(input_img_list)
         ############################################## extract audio feature ##############################################
@@ -79,7 +87,7 @@ def main(args):
             coord_list, frame_list = get_landmark_and_bbox(input_img_list, bbox_shift)
             with open(crop_coord_save_path, 'wb') as f:
                 pickle.dump(coord_list, f)
-                
+        # import pdb;pdb.set_trace()       
         i = 0
         input_latent_list = []
         for bbox, frame in zip(coord_list, frame_list):
@@ -99,6 +107,7 @@ def main(args):
         print("start inference")
         video_num = len(whisper_chunks)
         batch_size = args.batch_size
+        # import pdb;pdb.set_trace()
         gen = datagen(whisper_chunks,input_latent_list_cycle,batch_size)
         res_frame_list = []
         for i, (whisper_batch,latent_batch) in enumerate(tqdm(gen,total=int(np.ceil(float(video_num)/batch_size)))):
@@ -125,8 +134,11 @@ def main(args):
 #                 print(bbox)
                 continue
             
-            combine_frame = get_image(ori_frame,res_frame,bbox)
-            cv2.imwrite(f"{result_img_save_path}/{str(i).zfill(8)}.png",combine_frame)
+            # combine_frame = get_image(ori_frame,res_frame,bbox)
+            combine_frame = get_image(ori_frame,res_frame,bbox,True)
+
+            _, _, frame = gfpgan.enhance(combine_frame, has_aligned=False, only_center_face=False, paste_back=True)
+            cv2.imwrite(f"{result_img_save_path}/{str(i).zfill(8)}.png",frame)
 
         cmd_img2video = f"ffmpeg -y -v warning -r {fps} -f image2 -i {result_img_save_path}/%08d.png -vcodec libx264 -vf format=rgb24,scale=out_color_matrix=bt709,format=yuv420p -crf 18 temp.mp4"
         print(cmd_img2video)
@@ -136,8 +148,8 @@ def main(args):
         print(cmd_combine_audio)
         os.system(cmd_combine_audio)
         
-        os.remove("temp.mp4")
-        shutil.rmtree(result_img_save_path)
+        # os.remove("temp.mp4")
+        # shutil.rmtree(result_img_save_path)
         print(f"result is save to {output_vid_name}")
 
 if __name__ == "__main__":

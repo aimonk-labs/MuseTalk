@@ -53,7 +53,7 @@ def datagen(whisper_chunks,
         if len(latent_batch) >= batch_size:
             whisper_batch = np.stack(whisper_batch)
             latent_batch = torch.cat(latent_batch, dim=0)
-            yield whisper_batch, latent_batch
+            yield whisper_batch, latent_batch.to(device="cuda")
             whisper_batch, latent_batch = [], []
 
     # the last batch may smaller than batch size
@@ -61,4 +61,8 @@ def datagen(whisper_chunks,
         whisper_batch = np.stack(whisper_batch)
         latent_batch = torch.cat(latent_batch, dim=0)
 
-        yield whisper_batch, latent_batch
+        yield whisper_batch, latent_batch.to(device="cuda")
+
+
+# def datagen_modal():
+#     pass
