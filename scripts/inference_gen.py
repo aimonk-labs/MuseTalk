@@ -23,6 +23,7 @@ from gfpgan import GFPGANer
 audio_processor, vae, unet, pe = load_all_model()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 timesteps = torch.tensor([0], device=device)
+device_gfpgan = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model_path="/bv3/debasish_works/MuseTalk/GFPGANv1.4.pth" ##pass the path of the model where it is located
 bg_upsampler=None
@@ -31,7 +32,7 @@ restorer = GFPGANer(
         upscale=1,
         arch="clean",
         channel_multiplier=2,
-        bg_upsampler=bg_upsampler)
+        bg_upsampler=bg_upsampler,device=device_gfpgan)
 
 
 def get_filename(folder_path):
@@ -54,6 +55,8 @@ def get_filename(folder_path):
         file_name=fl.split("_withaudio")[0]+"_withaudio.mp4"
         i.append(file_name)
     return i
+
+
 @torch.no_grad()
 def main(args):
     PROCESSED_FILES=get_filename(args.result_dir)
@@ -67,7 +70,7 @@ def main(args):
     inference_config = OmegaConf.load(args.inference_config)
     print(inference_config)
     files_vids=os.listdir(args.input_video_folder)
-
+    VIDEO_PATH=args.input_video_folder
     # for task_id in inference_config:
     for f_v_a in files_vids:
         if "withaudio" in f_v_a and f_v_a not in PROCESSED_FILES:
@@ -212,7 +215,7 @@ if __name__ == "__main__":
                         action="store_true",
                         help="Whether use float16 to speed up inference",
     )
-    VIDEO_PATH="/bv3/debasish_works/inpust_musetalk"
+    # VIDEO_PATH="/bv3/debasish_works/inpust_musetalk"
 
     args = parser.parse_args()
     os.makedirs(args.result_dir,exist_ok=True)
