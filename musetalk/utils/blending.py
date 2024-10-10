@@ -22,79 +22,117 @@ def face_seg(image):
     seg_image = seg_image.resize(image.size)
     return seg_image
 
-def get_image(image,face,face_box,not_exists_avatar,no=0,mask_image=None,upper_boundary_ratio = 0.5,expand=1.2):
+def get_image(image,face,face_box,upper_boundary_ratio = 0.5,expand=1.2):
     #print(image.shape)
     #print(face.shape)
-    if not_exists_avatar:
-        body = Image.fromarray(image[:,:,::-1])
-        face = Image.fromarray(face[:,:,::-1])
+    
+    body = Image.fromarray(image[:,:,::-1])
+    face = Image.fromarray(face[:,:,::-1])
 
-        x, y, x1, y1 = face_box 
-        #print(x1-x,y1-y)
-        crop_box, s = get_crop_box(face_box, expand)
-        x_s, y_s, x_e, y_e = crop_box
-        face_position = (x, y)
+    x, y, x1, y1 = face_box 
+    #print(x1-x,y1-y)
+    crop_box, s = get_crop_box(face_box, expand)
+    x_s, y_s, x_e, y_e = crop_box
+    face_position = (x, y)
 
-        face_large = body.crop(crop_box)
-        ori_shape = face_large.size
+    face_large = body.crop(crop_box)
+    ori_shape = face_large.size
 
-        mask_image = face_seg(face_large)
+    mask_image = face_seg(face_large)
+    mask_small = mask_image.crop((x-x_s, y-y_s, x1-x_s, y1-y_s))
+    mask_image = Image.new('L', ori_shape, 0)
+    mask_image.paste(mask_small, (x-x_s, y-y_s, x1-x_s, y1-y_s))
+
+    # keep upper_boundary_ratio of talking area
+    width, height = mask_image.size
+    top_boundary = int(height * upper_boundary_ratio)
+    modified_mask_image = Image.new('L', ori_shape, 0)
+    modified_mask_image.paste(mask_image.crop((0, top_boundary, width, height)), (0, top_boundary))
+
+    blur_kernel_size = int(0.1 * ori_shape[0] // 2 * 2) + 1
+    mask_array = cv2.GaussianBlur(np.array(modified_mask_image), (blur_kernel_size, blur_kernel_size), 0)
+    mask_image = Image.fromarray(mask_array)
+    
+    face_large.paste(face, (x-x_s, y-y_s, x1-x_s, y1-y_s))
+    body.paste(face_large, crop_box[:2], mask_image)
+    body = np.array(body)
+    return body[:,:,::-1]
+
+
+# TODO: will refactor it such that it will presave segmentation images
+# def get_image(image,face,face_box,not_exists_avatar,no=0,mask_image=None,upper_boundary_ratio = 0.5,expand=1.2):
+#     #print(image.shape)
+#     #print(face.shape)
+#     if not_exists_avatar:
+#         body = Image.fromarray(image[:,:,::-1])
+#         face = Image.fromarray(face[:,:,::-1])
+
+#         x, y, x1, y1 = face_box 
+#         #print(x1-x,y1-y)
+#         crop_box, s = get_crop_box(face_box, expand)
+#         x_s, y_s, x_e, y_e = crop_box
+#         face_position = (x, y)
+
+#         face_large = body.crop(crop_box)
+#         ori_shape = face_large.size
+
+#         mask_image = face_seg(face_large)
         
         
         
-        cv2.imwrite(f"presaved_masked/avatar-1/mask_image_{no}.png",np.array(mask_image)) ##TODO: Auto
-        mask_small = mask_image.crop((x-x_s, y-y_s, x1-x_s, y1-y_s))
-        mask_image = Image.new('L', ori_shape, 0)
-        mask_image.paste(mask_small, (x-x_s, y-y_s, x1-x_s, y1-y_s))
+#         cv2.imwrite(f"presaved_masked/avatar-1/mask_image_{no}.png",np.array(mask_image)) ##TODO: Auto
+#         mask_small = mask_image.crop((x-x_s, y-y_s, x1-x_s, y1-y_s))
+#         mask_image = Image.new('L', ori_shape, 0)
+#         mask_image.paste(mask_small, (x-x_s, y-y_s, x1-x_s, y1-y_s))
 
-        # keep upper_boundary_ratio of talking area
-        width, height = mask_image.size
-        top_boundary = int(height * upper_boundary_ratio)
-        modified_mask_image = Image.new('L', ori_shape, 0)
-        modified_mask_image.paste(mask_image.crop((0, top_boundary, width, height)), (0, top_boundary))
+#         # keep upper_boundary_ratio of talking area
+#         width, height = mask_image.size
+#         top_boundary = int(height * upper_boundary_ratio)
+#         modified_mask_image = Image.new('L', ori_shape, 0)
+#         modified_mask_image.paste(mask_image.crop((0, top_boundary, width, height)), (0, top_boundary))
 
-        blur_kernel_size = int(0.1 * ori_shape[0] // 2 * 2) + 1
-        mask_array = cv2.GaussianBlur(np.array(modified_mask_image), (blur_kernel_size, blur_kernel_size), 0)
-        mask_image = Image.fromarray(mask_array)
+#         blur_kernel_size = int(0.1 * ori_shape[0] // 2 * 2) + 1
+#         mask_array = cv2.GaussianBlur(np.array(modified_mask_image), (blur_kernel_size, blur_kernel_size), 0)
+#         mask_image = Image.fromarray(mask_array)
         
-        face_large.paste(face, (x-x_s, y-y_s, x1-x_s, y1-y_s))
-        body.paste(face_large, crop_box[:2], mask_image)
-        body = np.array(body)
-        return body[:,:,::-1]
-    else:
-        face = Image.fromarray(face[:,:,::-1])
-        ## read an image using pillow
-        body = Image.fromarray(image[:,:,::-1])
-        x, y, x1, y1 = face_box 
-        #print(x1-x,y1-y)
-        crop_box, s = get_crop_box(face_box, expand)
-        x_s, y_s, x_e, y_e = crop_box
-        # face_position = (x, y)
+#         face_large.paste(face, (x-x_s, y-y_s, x1-x_s, y1-y_s))
+#         body.paste(face_large, crop_box[:2], mask_image)
+#         body = np.array(body)
+#         return body[:,:,::-1]
+#     else:
+#         face = Image.fromarray(face[:,:,::-1])
+#         ## read an image using pillow
+#         body = Image.fromarray(image[:,:,::-1])
+#         x, y, x1, y1 = face_box 
+#         #print(x1-x,y1-y)
+#         crop_box, s = get_crop_box(face_box, expand)
+#         x_s, y_s, x_e, y_e = crop_box
+#         # face_position = (x, y)
 
-        face_large = body.crop(crop_box)
-        ori_shape = face_large.size
+#         face_large = body.crop(crop_box)
+#         ori_shape = face_large.size
         
-        mask_image=Image.open(f"presaved_masked/avatar-1/mask_image_{no}.png")
-        # mask_image = face_seg(face_large)
-        # cv2.imwrite(f"presaved_masked/avatar-1/mask_image_{no}.png",np.array(mask_image)) ##TODO: Automate
-        mask_small = mask_image.crop((x-x_s, y-y_s, x1-x_s, y1-y_s))
-        mask_image = Image.new('L', ori_shape, 0)
-        mask_image.paste(mask_small, (x-x_s, y-y_s, x1-x_s, y1-y_s))
+#         mask_image=Image.open(f"presaved_masked/avatar-1/mask_image_{no}.png")
+#         # mask_image = face_seg(face_large)
+#         # cv2.imwrite(f"presaved_masked/avatar-1/mask_image_{no}.png",np.array(mask_image)) ##TODO: Automate
+#         mask_small = mask_image.crop((x-x_s, y-y_s, x1-x_s, y1-y_s))
+#         mask_image = Image.new('L', ori_shape, 0)
+#         mask_image.paste(mask_small, (x-x_s, y-y_s, x1-x_s, y1-y_s))
 
-        # keep upper_boundary_ratio of talking area
-        width, height = mask_image.size
-        top_boundary = int(height * upper_boundary_ratio)
-        modified_mask_image = Image.new('L', ori_shape, 0)
-        modified_mask_image.paste(mask_image.crop((0, top_boundary, width, height)), (0, top_boundary))
+#         # keep upper_boundary_ratio of talking area
+#         width, height = mask_image.size
+#         top_boundary = int(height * upper_boundary_ratio)
+#         modified_mask_image = Image.new('L', ori_shape, 0)
+#         modified_mask_image.paste(mask_image.crop((0, top_boundary, width, height)), (0, top_boundary))
 
-        blur_kernel_size = int(0.1 * ori_shape[0] // 2 * 2) + 1
-        mask_array = cv2.GaussianBlur(np.array(modified_mask_image), (blur_kernel_size, blur_kernel_size), 0)
-        mask_image = Image.fromarray(mask_array)
+#         blur_kernel_size = int(0.1 * ori_shape[0] // 2 * 2) + 1
+#         mask_array = cv2.GaussianBlur(np.array(modified_mask_image), (blur_kernel_size, blur_kernel_size), 0)
+#         mask_image = Image.fromarray(mask_array)
         
-        face_large.paste(face, (x-x_s, y-y_s, x1-x_s, y1-y_s))
-        body.paste(face_large, crop_box[:2], mask_image)
-        body = np.array(body)
-        return body[:,:,::-1]
+#         face_large.paste(face, (x-x_s, y-y_s, x1-x_s, y1-y_s))
+#         body.paste(face_large, crop_box[:2], mask_image)
+#         body = np.array(body)
+#         return body[:,:,::-1]
     
 
 def get_image_prepare_material(image,face_box,upper_boundary_ratio = 0.5,expand=1.2):
