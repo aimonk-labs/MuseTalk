@@ -1,5 +1,5 @@
 FPS=24.0
 BBOX_SHIFT=0.0
 AUDIO_THRESHOLD_SECONDS=40.0
-AVATAR_PRESAVES_DIR="../avatar_pose_videos_presaves"
+AVATAR_PRESAVES_DIR="models/musetalk/1/avatar_pose_videos_presaves"
 BATCH_SIZE=8

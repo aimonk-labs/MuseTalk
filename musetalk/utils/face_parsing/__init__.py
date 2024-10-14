@@ -6,6 +6,8 @@ import numpy as np
 from PIL import Image
 from .model import BiSeNet
 import torchvision.transforms as transforms
+MuseTalk_submodal_dir = os.path.dirname(os.path.abspath(__file__))
+MuseTalk_submodal_parent_dir= os.path.dirname(os.path.dirname(MuseTalk_submodal_dir))
 
 class FaceParsing():
     def __init__(self):
@@ -13,8 +15,8 @@ class FaceParsing():
         self.preprocess = self.image_preprocess()
 
     def model_init(self, 
-                   resnet_path='./models/face-parse-bisent/resnet18-5c106cde.pth', 
-                   model_pth='./models/face-parse-bisent/79999_iter.pth'):
+                   resnet_path=os.path.join(MuseTalk_submodal_parent_dir,'models/face-parse-bisent/resnet18-5c106cde.pth'), 
+                   model_pth=os.path.join(MuseTalk_submodal_parent_dir,'models/face-parse-bisent/79999_iter.pth')):
         net = BiSeNet(resnet_path)
         if torch.cuda.is_available():
             net.cuda()

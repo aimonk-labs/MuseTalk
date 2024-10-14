@@ -8,6 +8,11 @@ import glob
 import pickle
 from tqdm import tqdm
 import copy
+import sys
+from pathlib import Path
+MuseTalk_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(MuseTalk_dir)
+CHECKPOINTS_DIR=os.path.join(Path(MuseTalk_dir).parent,"checkpoints")
 from musetalk.utils.utils import get_file_type,get_video_fps,datagen
 from musetalk.utils.preprocessing import get_landmark_and_bbox,read_imgs,coord_placeholder
 from musetalk.utils.blending import get_image
@@ -16,20 +21,23 @@ import shutil
 import time
 from fast_gfpgan import FAST_GFGGaner
 from global_variable import FPS,BBOX_SHIFT,AVATAR_PRESAVES_DIR,BATCH_SIZE
-
+from bgremoval_package.demo.run import matting
+from bgremoval_package.demo.run import load_model as load_model_modenet
 
 class MusetalkTritonInference:
     def __init__(self) -> None:
         self.audio_processor, self.vae, self.unet, self.pe = load_all_model()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.timesteps = torch.tensor([0], device=self.device)
-        model_path="/bv3/debasish_works/MuseTalk/GFPGANv1.4.pth"
+        # model_path="/bv3/debasish_works/MuseTalk/GFPGANv1.4.pth"  # TODO: To be dynamic 
+        model_path=os.path.join(CHECKPOINTS_DIR,"GFPGANv1.4.pth")
         self.gfpgan=FAST_GFGGaner(
             model_path=model_path,
             upscale=1,
             arch="clean",
             channel_multiplier=2,
             bg_upsampler=None,device="cuda") 
+        self.modnet=load_model_modenet()
 
     def read_avatar_pose_video(self,video_path,input_basename,result_dir,output_basename):
         # if output_vid_name is None:
@@ -123,7 +131,7 @@ class MusetalkTritonInference:
             _, _, frame = self.gfpgan.enhance(combine_frame, has_aligned=False, only_center_face=False, paste_back=True) ##applied GFPGAN
             cv2.imwrite(f"{result_img_save_path}/{str(i).zfill(8)}.png",frame)
 
-    def infer(self,video_path,audio_path,avatar_name,result_dir):
+    def infer(self,video_path,audio_path,bg_removalflag,avatar_name,result_dir):
         input_basename = avatar_name
         audio_basename  = os.path.basename(audio_path).split('.')[0]
         output_basename = f"{input_basename}_{audio_basename}"
@@ -139,6 +147,7 @@ class MusetalkTritonInference:
         if os.path.exists(pkl_save_folder_path):
             pkl_flag=True
         else:
+            os.makedirs(pkl_save_folder_path,exist_ok =True)
             pkl_flag=False
         
         if not pkl_flag:
@@ -182,8 +191,13 @@ class MusetalkTritonInference:
         # os.remove("temp.mp4")
         # shutil.rmtree(result_img_save_path)
         print(f"result is save to {output_vid_name}")
-
-        return output_vid_name
+        if bg_removalflag:
+            output_path=os.path.join(result_dir,"matts")
+            os.makedirs(output_path,exist_ok=True)
+            matting(output_vid_name,output_path,self.modnet)
+            return output_path
+        else:
+            return output_vid_name
 
 
         
