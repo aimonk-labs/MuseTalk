@@ -1,0 +1,530 @@
+{
+    "tortoise": {
+        "bucket": "vidgendata",
+        "files": [
+            {
+                "name": "diffusion_decoder",
+                "s3_key": "model_checkpoints/tortoise/diffusion_decoder.pth",
+                "save_path": "models/tortoise/1/checkpoints/diffusion_decoder.pth",
+                "md5sum": "0c3fbcfd9129432190a9be5a31b1328c"
+            },
+            {
+                "name": "autoregressive",
+                "s3_key": "model_checkpoints/tortoise/autoregressive.pth",
+                "save_path": "models/tortoise/1/checkpoints/autoregressive.pth",
+                "md5sum": "d1f7923277a74e6f1a293fc6c25ecb88"
+            },
+            {
+                "name": "clvp2",
+                "s3_key": "model_checkpoints/tortoise/clvp2.pth",
+                "save_path": "models/tortoise/1/checkpoints/clvp2.pth",
+                "md5sum": "5ced374b1feab8db8848314f8a87739c"
+            },
+            {
+                "name": "vocoder",
+                "s3_key": "model_checkpoints/tortoise/vocoder.pth",
+                "save_path": "models/tortoise/1/checkpoints/vocoder.pth",
+                "md5sum": "603efb882c58c556a7cc7df7fa1e299f"
+            }
+        ]
+    },
+    "musetalk": {
+        "bucket": "vidgen-public-bucket",
+        "files": [
+            {
+                "name": "dw-ll_ucoco_384",
+                "s3_key": "model_checkpoints/musetalk/dwpose/dw-ll_ucoco_384.pth",
+                "save_path": "musetalk/models/dwpose/dw-ll_ucoco_384.pth",
+                "md5sum": ""
+            },
+            {
+                "name": "79999_iter",
+                "s3_key": "model_checkpoints/musetalk/face-parse-bisent/79999_iter.pth",
+                "save_path": "musetalk/models/face-parse-bisent/79999_iter.pth",
+                "md5sum": ""
+            },
+            {
+                "name": "resnet18-5c106cde",
+                "s3_key": "model_checkpoints/musetalk/face-parse-bisent/resnet18-5c106cde.pth",
+                "save_path": "musetalk/models/face-parse-bisent/resnet18-5c106cde.pth",
+                "md5sum": ""
+            },
+            {
+                "name": "musetalk",
+                "s3_key": "model_checkpoints/musetalk/musetalk/musetalk.json",
+                "save_path": "musetalk/models/musetalk/musetalk.json",
+                "md5sum": ""
+            },
+            {
+                "name": "pytorch_model",
+                "s3_key": "model_checkpoints/musetalk/musetalk/pytorch_model.bin",
+                "save_path": "musetalk/models/musetalk/pytorch_model.bin",
+                "md5sum": ""
+            },
+            {
+                "name": "sd-vae-ft-mse",
+                "s3_key": "model_checkpoints/musetalk/sd-vae-ft-mse/config.json",
+                "save_path": "musetalk/models/sd-vae-ft-mse/config.json",
+                "md5sum": ""
+            },
+            {
+                "name": "sd-vae-ft-mse",
+                "s3_key": "model_checkpoints/musetalk/sd-vae-ft-mse/diffusion_pytorch_model.bin",
+                "save_path": "musetalk/models/sd-vae-ft-mse/diffusion_pytorch_model.bin",
+                "md5sum": ""
+            },
+            {
+                "name": "whisper",
+                "s3_key": "model_checkpoints/musetalk/whisper/tiny.pt",
+                "save_path": "musetalk/models/whisper/tiny.pt",
+                "md5sum": ""
+            }
+        ]
+    },
+
+    "nemo": {
+        "bucket": "vidgendata",
+        "files": [
+            {
+                "name": "neural_text_normalization_t5_decoder",
+                "s3_key": "model_checkpoints/nemo/neural_text_normalization_t5_decoder.nemo",
+                "save_path": "models/tortoise/1/checkpoints/nemo_checkpoint/neural_text_normalization_t5_decoder.nemo",
+                "md5sum": "56e45b551d9e2311c83916b938ee3ad5"
+            },
+            {
+                "name": "neural_text_normalization_t5_tagger",
+                "s3_key": "model_checkpoints/nemo/neural_text_normalization_t5_tagger.nemo",
+                "save_path": "models/tortoise/1/checkpoints/nemo_checkpoint/neural_text_normalization_t5_tagger.nemo",
+                "md5sum": "a089ba43b979b86db58c2304562395e1"
+            }
+        ]
+    },
+    "sadtalker": {
+        "bucket": "vidgendata",
+        "files": [
+            {
+                "name": "01_MorphableModel",
+                "s3_key": "model_checkpoints/sadtalker/01_MorphableModel.mat",
+                "save_path": "models/sadtalker/1/checkpoints/BFM_Fitting/01_MorphableModel.mat",
+                "md5sum": "5d5e341f76ba9d67bea483c554532196"
+            },
+            {
+                "name": "auido2exp_00300-model",
+                "s3_key": "model_checkpoints/sadtalker/auido2exp_00300-model.pth",
+                "save_path": "models/sadtalker/1/checkpoints/auido2exp_00300-model.pth",
+                "md5sum": "43cc16871a4f64e50160232d112f816b"
+            },
+            {
+                "name": "auido2pose_00140-model",
+                "s3_key": "model_checkpoints/sadtalker/auido2pose_00140-model.pth",
+                "save_path": "models/sadtalker/1/checkpoints/auido2pose_00140-model.pth",
+                "md5sum": "80fa1aea64426d73d0fb64438c8696e0"
+            },
+            {
+                "name": "BFM_exp_idx",
+                "s3_key": "model_checkpoints/sadtalker/BFM_exp_idx.mat",
+                "save_path": "models/sadtalker/1/checkpoints/BFM_Fitting/BFM_exp_idx.mat",
+                "md5sum": "f66260e1b879b9c81574cecf098466fb"
+            },
+            {
+                "name": "BFM_front_idx",
+                "s3_key": "model_checkpoints/sadtalker/BFM_front_idx.mat",
+                "save_path": "models/sadtalker/1/checkpoints/BFM_Fitting/BFM_front_idx.mat",
+                "md5sum": "20021ecec89adb3ff1698fba8a442cac"
+            },
+            {
+                "name": "BFM09_model_info",
+                "s3_key": "model_checkpoints/sadtalker/BFM09_model_info.mat",
+                "save_path": "models/sadtalker/1/checkpoints/BFM_Fitting/BFM09_model_info.mat",
+                "md5sum": "b889680353f77052fa03f8102e823934"
+            },
+            {
+                "name": "epoch_20",
+                "s3_key": "model_checkpoints/sadtalker/epoch_20.pth",
+                "save_path": "models/sadtalker/1/checkpoints/epoch_20.pth",
+                "md5sum": "5ded653358f2dbb9a0a98d383497a810"
+            },
+            {
+                "name": "Exp_Pca",
+                "s3_key": "model_checkpoints/sadtalker/Exp_Pca.bin",
+                "save_path": "models/sadtalker/1/checkpoints/BFM_Fitting/Exp_Pca.bin",
+                "md5sum": "1be7e8e268fda570d6987f9dc42d0f54"
+            },
+            {
+                "name": "facemodel_info",
+                "s3_key": "model_checkpoints/sadtalker/facemodel_info.mat",
+                "save_path": "models/sadtalker/1/checkpoints/BFM_Fitting/facemodel_info.mat",
+                "md5sum": "a07493be61c04485ccbc37d7c2b488be"
+            },
+            {
+                "name": "facevid2vid_00189-model",
+                "s3_key": "model_checkpoints/sadtalker/facevid2vid_00189-model.pth.tar",
+                "save_path": "models/sadtalker/1/checkpoints/facevid2vid_00189-model.pth.tar",
+                "md5sum": "0dbdf37f02a3e7ed2115ddee8789b33a"
+            },
+            {
+                "name": "GFPGANv1.4",
+                "s3_key": "model_checkpoints/sadtalker/GFPGANv1.4.pth",
+                "save_path": "models/sadtalker/1/checkpoints/GFPGANv1.4.pth",
+                "md5sum": "94d735072630ab734561130a47bc44f8"
+            },
+            {
+                "name": "mapping_00109-model",
+                "s3_key": "model_checkpoints/sadtalker/mapping_00109-model.pth.tar",
+                "save_path": "models/sadtalker/1/checkpoints/mapping_00109-model.pth.tar",
+                "md5sum": "f6e586b13429d241bff91544933e287c"
+            },
+            {
+                "name": "mapping_00229-model",
+                "s3_key": "model_checkpoints/sadtalker/mapping_00229-model.pth.tar",
+                "save_path": "models/sadtalker/1/checkpoints/mapping_00229-model.pth.tar",
+                "md5sum": "8f451b28204a3522a8deec8889b73b12"
+            },
+            {
+                "name": "modnet_webcam_portrait_matting",
+                "s3_key": "model_checkpoints/sadtalker/modnet_webcam_portrait_matting.ckpt",
+                "save_path": "models/sadtalker/1/checkpoints/bgremoval/modnet_webcam_portrait_matting.ckpt",
+                "md5sum": "b60360be61de983191433769658f89cc"
+            },
+            {
+                "name": "s3fd-619a316812",
+                "s3_key": "model_checkpoints/sadtalker/s3fd-619a316812.pth",
+                "save_path": "models/sadtalker/1/checkpoints/hub/checkpoints/s3fd-619a316812.pth",
+                "md5sum": "3b5a9888bf0beb93c177db5a18375a6c"
+            },
+            {
+                "name": "select_vertex_id",
+                "s3_key": "model_checkpoints/sadtalker/select_vertex_id.mat",
+                "save_path": "models/sadtalker/1/checkpoints/BFM_Fitting/select_vertex_id.mat",
+                "md5sum": "cee43eca6e2101be7e2383d8cff62667"
+            },
+            {
+                "name": "shape_predictor_68_face_landmarks",
+                "s3_key": "model_checkpoints/sadtalker/shape_predictor_68_face_landmarks.dat",
+                "save_path": "models/sadtalker/1/checkpoints/shape_predictor_68_face_landmarks.dat",
+                "md5sum": "73fde5e05226548677a050913eed4e04"
+            },
+            {
+                "name": "similarity_Lm3D_all",
+                "s3_key": "model_checkpoints/sadtalker/similarity_Lm3D_all.mat",
+                "save_path": "models/sadtalker/1/checkpoints/BFM_Fitting/similarity_Lm3D_all.mat",
+                "md5sum": "1e4a37c3a7e463477d1868f22db5237a"
+            },
+            {
+                "name": "std_exp",
+                "s3_key": "model_checkpoints/sadtalker/std_exp.txt",
+                "save_path": "models/sadtalker/1/checkpoints/BFM_Fitting/std_exp.txt",
+                "md5sum": "d48343419519761463f9dafe08e4787e"
+            },
+            {
+                "name": "wav2lip",
+                "s3_key": "model_checkpoints/sadtalker/wav2lip.pth",
+                "save_path": "models/sadtalker/1/checkpoints/wav2lip.pth",
+                "md5sum": "8d9dd7baf8b2e4c1195c77c65b62a965"
+            }
+        ]
+    },
+    "gfpgan": {
+        "bucket": "vidgendata",
+        "files": [
+            {
+                "name": "alignment_WFLW",
+                "s3_key": "model_checkpoints/gfpgan/alignment_WFLW_4HG.pth",
+                "save_path": "gfpgan/weights/alignment_WFLW_4HG.pth",
+                "md5sum": "bd00e0a1419b9469e7a562758614c895"
+            },
+            {
+                "name": "detection_Resnet50_Final",
+                "s3_key": "model_checkpoints/gfpgan/detection_Resnet50_Final.pth",
+                "save_path": "gfpgan/weights/detection_Resnet50_Final.pth",
+                "md5sum": "bce939bc22d8cec91229716dd932e56e"
+            },
+            {
+                "name": "parsing_parsenet",
+                "s3_key": "model_checkpoints/gfpgan/parsing_parsenet.pth",
+                "save_path": "gfpgan/weights/parsing_parsenet.pth",
+                "md5sum": "33d9956898d4fa637c30eda7faa28496"
+            },
+	    {
+                "name": "GFPGANv1.4",
+                "s3_key": "model_checkpoints/sadtalker/GFPGANv1.4.pth",
+                "save_path": "gfpgan/weights/GFPGANv1.4.pth",
+                "md5sum": "94d735072630ab734561130a47bc44f8"
+            }
+        ]
+    },
+    "iplap": {
+        "bucket": "vidgendata",
+        "files": [
+            {
+                "name": "landmarkgenerator_checkpoint",
+                "s3_key": "model_checkpoints/iplap/landmarkgenerator_checkpoint.pth",
+                "save_path": "models/IP_LAP/1/checkpoints/landmarkgenerator_checkpoint.pth",
+                "md5sum": "807280ec8d2ba7771da330dd730584d8"
+            },
+            {
+                "name": "renderer_checkpoint",
+                "s3_key": "model_checkpoints/iplap/renderer_checkpoint.pth",
+                "save_path": "models/IP_LAP/1/checkpoints/renderer_checkpoint.pth",
+                "md5sum": "0f350705d5fb5d29cd204986d392c4e9"
+            },
+            {
+                "name": "modnet_webcam_portrait_matting",
+                "s3_key": "model_checkpoints/sadtalker/modnet_webcam_portrait_matting.ckpt",
+                "save_path": "models/IP_LAP/1/checkpoints/bgremoval/modnet_webcam_portrait_matting.ckpt",
+                "md5sum": "b60360be61de983191433769658f89cc"
+            },
+            {
+                "name": "GFPGANv1.4",
+                "s3_key": "model_checkpoints/sadtalker/GFPGANv1.4.pth",
+                "save_path": "models/IP_LAP/1/checkpoints/GFPGANv1.4.pth",
+                "md5sum": "94d735072630ab734561130a47bc44f8"
+            },
+            {
+                "name": "s3fd_v8601",
+                "s3_key": "model_checkpoints/iplap/s3fd_v8601.engine",
+                "save_path": "models/IP_LAP/1/checkpoints/s3fd_v8601.engine",
+                "md5sum":"aaa0281c03c6f1d4d6688c1a165758a2"
+            },
+            {
+                "name": "parsenet_model",
+                "s3_key": "model_checkpoints/iplap/parsing_parsenet.pth",
+                "save_path": "models/IP_LAP/1/checkpoints/parsing_parsenet.pth",
+                "md5sum":""
+            }
+        ]
+    },
+    "mcnet": {
+        "bucket": "vidgendata",
+        "files": [
+            {
+                "name": "mcnet_checkpoint",
+                "s3_key": "model_checkpoints/mcnet/00000099-checkpoint.pth.tar",
+                "save_path": "models/mcnet/1/checkpoint/mcnet_checkpoint.pth.tar",
+                "md5sum": "807280ec8d2ba7771da330dd730584d8"
+            }
+        ]
+    },
+    "vidgen_editor": {
+        "bucket": "vidgendata",
+        "files": [
+            {
+                "name": "landmarkgenerator_checkpoint",
+                "s3_key": "model_checkpoints/iplap/landmarkgenerator_checkpoint.pth",
+                "save_path": "models/vidgen_editor/1/checkpoints/landmarkgenerator_checkpoint.pth",
+                "md5sum": "807280ec8d2ba7771da330dd730584d8"
+            },
+            {
+                "name": "renderer_checkpoint",
+                "s3_key": "model_checkpoints/iplap/renderer_checkpoint.pth",
+                "save_path": "models/vidgen_editor/1/checkpoints/renderer_checkpoint.pth",
+                "md5sum": "0f350705d5fb5d29cd204986d392c4e9"
+            },
+            {
+                "name": "modnet_webcam_portrait_matting",
+                "s3_key": "model_checkpoints/sadtalker/modnet_webcam_portrait_matting.ckpt",
+                "save_path": "models/vidgen_editor/1/checkpoints/bgremoval/modnet_webcam_portrait_matting.ckpt",
+                "md5sum": "b60360be61de983191433769658f89cc"
+            },
+            {
+                "name": "GFPGANv1.4",
+                "s3_key": "model_checkpoints/sadtalker/GFPGANv1.4.pth",
+                "save_path": "models/vidgen_editor/1/checkpoints/GFPGANv1.4.pth",
+                "md5sum": "94d735072630ab734561130a47bc44f8"
+            },
+            {
+                "name": "mcnet_checkpoint",
+                "s3_key": "model_checkpoints/mcnet/00000099-checkpoint.pth.tar",
+                "save_path": "models/vidgen_editor/1/checkpoints/mcnet_checkpoint.pth.tar",
+                "md5sum": "807280ec8d2ba7771da330dd730584d8"
+            },
+            {
+                "name": "s3fd_v8601",
+                "s3_key": "model_checkpoints/iplap/s3fd_v8601.engine",
+                "save_path": "models/vidgen_editor/1/checkpoints/s3fd_v8601.engine",
+                "md5sum": "aaa0281c03c6f1d4d6688c1a165758a2"
+             },
+             {
+                "name": "parsenet_model",
+                "s3_key": "model_checkpoints/iplap/parsing_parsenet.pth",
+                "save_path": "models/vidgen_editor/1/checkpoints/parsing_parsenet.pth",
+                "md5sum":""
+            }
+        ]
+    },
+    "fonts":{
+        "bucket": "vidgendata",
+        "files": [
+            {
+                "name": "Apple",
+                "s3_key": "fonts/Apple.ttf",
+                "save_path": "renderer/fonts/Apple.ttf",
+                "md5sum": "3aa66de4cce93074465ff5345743d3ec"
+            },
+            {
+                "name": "monospace",
+                "s3_key": "fonts/monospace.ttf",
+                "save_path": "renderer/fonts/monospace.ttf",
+                "md5sum": "44a689f47e78e45ec796581312ebdd16"
+            },
+            {
+                "name": "monospace-Bold",
+                "s3_key": "fonts/monospace-Bold.ttf",
+                "save_path": "renderer/fonts/monospace-Bold.ttf",
+                "md5sum": "a36bbba0b722b8b4e28d5724e0332855"
+            },
+            {
+                "name": "monospace-Italic",
+                "s3_key": "fonts/monospace-Italic.ttf",
+                "save_path": "renderer/fonts/monospace-Italic.ttf",
+                "md5sum": "24f79382039ee733cbe32fd61e327885"
+            },
+            {
+                "name": "monospace-BoldItalic",
+                "s3_key": "fonts/monospace-BoldItalic.ttf",
+                "save_path": "renderer/fonts/monospace-BoldItalic.ttf",
+                "md5sum": "717a0ea36e59239242afaa78c770d52b"
+            },
+            {
+                "name": "sans-serif",
+                "s3_key": "fonts/sans-serif.ttf",
+                "save_path": "renderer/fonts/sans-serif.ttf",
+                "md5sum": "8f0b07536ee61977cd61af0c95819cd7"
+            },
+            {
+                "name": "sans-serif-Bold",
+                "s3_key": "fonts/sans-serif-Bold.ttf",
+                "save_path": "renderer/fonts/sans-serif-Bold.ttf",
+                "md5sum": "8bac22ed4fd7c8a30536be18e2984f84"
+            },
+            {
+                "name": "sans-serif-Italic",
+                "s3_key": "fonts/sans-serif-Italic.ttf",
+                "save_path": "renderer/fonts/sans-serif-Italic.ttf",
+                "md5sum": "c7dcce084c445260a266f92db56f5517"
+            },
+            {
+                "name": "sans-serif-BoldItalic",
+                "s3_key": "fonts/sans-serif-BoldItalic.ttf",
+                "save_path": "renderer/fonts/sans-serif-BoldItalic.ttf",
+                "md5sum": "78b08a68d05d5fabb0b8effd51bf6ade"
+            },
+            {
+                "name": "serif",
+                "s3_key": "fonts/serif.ttf",
+                "save_path": "renderer/fonts/serif.ttf",
+                "md5sum": "57fd85c7ad0bcfb0ea547e41758c60de"
+            },
+            {
+                "name": "serif-Bold",
+                "s3_key": "fonts/serif-Bold.ttf",
+                "save_path": "renderer/fonts/serif-Bold.ttf",
+                "md5sum": "1d3466fec8a99ed65f32cbdfb3d5c4d0"
+            },
+            {
+                "name": "serif-Italic",
+                "s3_key": "fonts/serif-Italic.ttf",
+                "save_path": "renderer/fonts/serif-Italic.ttf",
+                "md5sum": "e3d6e9ea74f51afbfc9071e214ddb9e8"
+            },
+            {
+                "name": "serif-BoldItalic",
+                "s3_key": "fonts/serif-BoldItalic.ttf",
+                "save_path": "renderer/fonts/serif-BoldItalic.ttf",
+                "md5sum": "85950e39e82115c6eab24d91fc1b7723"
+            }
+        ]
+    },
+    "mcnet_predefined_avatar_videos":{
+        "bucket": "vidgendata",
+        "files": [
+            {
+                "name": "Avatar-1",
+                "s3_key": "mcnet_predefined_avatar_videos/Avatar-1.mp4",
+                "save_path": "models/vidgen_editor/1/mcnet_predefined_avatar_videos/Avatar-1.mp4",
+                "md5sum": "dcf1f9089b30721407647e435ab3daa2"
+            },
+            {
+                "name": "Avatar-2",
+                "s3_key": "mcnet_predefined_avatar_videos/Avatar-2.mp4",
+                "save_path": "models/vidgen_editor/1/mcnet_predefined_avatar_videos/Avatar-2.mp4",
+                "md5sum": "eb1e841d45ae82ed67a6b107ee7ed17f"
+            },
+            {
+                "name": "Avatar-3",
+                "s3_key": "mcnet_predefined_avatar_videos/Avatar-3.mp4",
+                "save_path": "models/vidgen_editor/1/mcnet_predefined_avatar_videos/Avatar-3.mp4",
+                "md5sum": "9cfa9b01b5f7c07eecd85a8268c524ee"
+            }
+        ]
+    },
+    "piper_checkpoints":{
+        "bucket": "vidgendata",
+        "files": [
+            {
+                "name": "en_US",
+                "s3_key": "model_checkpoints/piper_checkpoints/en_US.zip",
+                "save_path": "models/piper/1/checkpoint/en_US.zip",
+                "md5sum": "a3d14f6acdf60740b99f4c86fbf0d24c"
+            }
+        ]
+    },
+    "fiiltered_fonts_zip":{
+        "bucket": "vidgendata",
+        "files": [
+            {
+                "name": "filtered_fonts",
+                "s3_key": "fonts/filtered_fonts.zip",
+                "save_path": "renderer/fonts/filtered_fonts.zip",
+                "md5sum": "292ecb80a717af5edfe0e1ce47dfb425"
+            }
+        ]
+    },
+    "rvc_checkpoints":{
+        "bucket": "vidgendata",
+        "files": [
+            {
+                "name": "hubert_base",
+                "s3_key": "model_checkpoints/rvc_checkpoints/hubert/hubert_base.pt",
+                "save_path": "models/rvc/1/Retrieval-based-Voice-Conversion-WebUI/assets/hubert/hubert_base.pt",
+                "md5sum": "b76f784c1958d4e535cd0f6151ca35e4"
+            },
+            {
+                "name": "f0D48k",
+                "s3_key": "model_checkpoints/rvc_checkpoints/pretrained_v2/f0D48k.pth",
+                "save_path": "models/rvc/1/Retrieval-based-Voice-Conversion-WebUI/assets/pretrained_v2/f0D48k.pth",
+                "md5sum": "96617a342cd48e15eb6b77b90356d4ff"
+            },
+            {
+                "name": "f0G48k",
+                "s3_key": "model_checkpoints/rvc_checkpoints/pretrained_v2/f0G48k.pth",
+                "save_path": "models/rvc/1/Retrieval-based-Voice-Conversion-WebUI/assets/pretrained_v2/f0G48k.pth",
+                "md5sum": "b0533ad5216fd2cec0ff4f8a075cef3a"
+            },
+            {
+                "name": "rmvpe",
+                "s3_key": "model_checkpoints/rvc_checkpoints/rmvpe/rmvpe.pt",
+                "save_path": "models/rvc/1/Retrieval-based-Voice-Conversion-WebUI/assets/rmvpe/rmvpe.pt",
+                "md5sum": "059b08cb99737850741ba9d20298533d"
+            },
+            {
+                "name": "HP2-人声vocals+非人声instrumentals",
+                "s3_key": "model_checkpoints/rvc_checkpoints/uvr5_weights/HP2-人声vocals+非人声instrumentals.pth",
+                "save_path": "models/rvc/1/Retrieval-based-Voice-Conversion-WebUI/assets/uvr5_weights/HP2-人声vocals+非人声instrumentals.pth",
+                "md5sum": "ca106edd563e034bde0bdec4bb7a4b36"
+            },
+            {
+                "name": "HP5-主旋律人声vocals+其他instrumentals",
+                "s3_key": "model_checkpoints/rvc_checkpoints/uvr5_weights/HP5-主旋律人声vocals+其他instrumentals.pth",
+                "save_path": "models/rvc/1/Retrieval-based-Voice-Conversion-WebUI/assets/uvr5_weights/HP5-主旋律人声vocals+其他instrumentals.pth",
+                "md5sum": "08611fb99bd59eaa79ad27c58d137727"
+            },
+            {
+                "name": "Synthesizer_inputs",
+                "s3_key": "model_checkpoints/rvc_checkpoints/Synthesizer_inputs.pth",
+                "save_path": "models/rvc/1/Retrieval-based-Voice-Conversion-WebUI/assets/Synthesizer_inputs.pth",
+                "md5sum": "763c87f3524e917e48bd7d69f8fe4616"
+            }
+        ]
+    }
+}
