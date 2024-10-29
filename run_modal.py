@@ -1,6 +1,6 @@
 
-from modal import Stub,Image, method,gpu,enter,App
 import modal
+from modal import App, Image, Stub, enter, gpu, method
 
 stub = App("vidgen-musetalk-modal-3")
 volume = modal.Volume.from_name("my-test-volume")
@@ -11,14 +11,14 @@ class MyLifecycleClass:
     @modal.enter()
     def enter(self):
         import os
-            
+
         # os.system(f"pip3 install ffmpeg-python")
         # os.system(f"pip3 install transformers==4.33.1")
         import ffmpeg
         
         print("succesfully ffmpeg")
-        from musetalk.utils.utils import load_all_model
         from fast_gfpgan import FAST_GFGGaner
+        from musetalk.utils.utils import load_all_model
         self.audio_processor, self.vae, self.unet, self.pe = load_all_model()
         import torch
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -34,26 +34,30 @@ class MyLifecycleClass:
 
     @modal.method()
     def foo(self,video_path,audio_path,bbx_shift):
-        import torch
-        import os
-        from musetalk.utils.utils import get_file_type,get_video_fps,datagen
-        from musetalk.utils.preprocessing import get_landmark_and_bbox,read_imgs,coord_placeholder
-        import glob
-        import cv2
         import copy
-        from musetalk.utils.blending import get_image
+        import glob
+        import os
         import pickle
-        from tqdm import tqdm
+
+        import cv2
         import numpy as np
+        import torch
+        from tqdm import tqdm
+
+        from musetalk.utils.blending import get_image
+        from musetalk.utils.preprocessing import (coord_placeholder,
+                                                  get_landmark_and_bbox,
+                                                  read_imgs)
+        from musetalk.utils.utils import datagen, get_file_type, get_video_fps
 
         @torch.no_grad()
         def main(vp,ap,bbx_shift):
             input_basename = os.path.basename(vp).split('.')[0]
             pkl_save_folder_path=os.path.join("/root/musetalk/","presaved_files",input_basename)
             if os.path.exists(pkl_save_folder_path):
-                Flag=True
-            else:
                 Flag=False
+            else:
+                Flag=True
 
             if Flag:
                 video_path = vp
@@ -123,12 +127,16 @@ class MyLifecycleClass:
 
                 f.close()
                 volume.commit()
-                return len(gen),height,width
+                return len(gen),height,width, input_basename
             else:
                 print("Running the presaved part")
                 video_path = vp
                 audio_path = ap
                 bbox_shift = bbx_shift
+                if os.path.exists(video_path):
+                    print("video path exists")
+                if os.path.exists(audio_path):
+                    print("audio path exists")
                 result_dir="/root/"
                 input_basename = os.path.basename(video_path).split('.')[0]
                 audio_basename  = os.path.basename(audio_path).split('.')[0]
@@ -138,7 +146,7 @@ class MyLifecycleClass:
                 frame_list_cycle_save_path=os.path.join(pkl_save_folder_path,"frame_list_cycle")
                 coord_list_cycle_save_path=os.path.join(pkl_save_folder_path,"coord_list_cycle")
                 input_latent_list_cycle_save_path=os.path.join(pkl_save_folder_path,"input_latent_list_cycle")
-                
+
                 with open(frame_list_cycle_save_path,'rb') as flsi:
                     frame_list_cycle = pickle.load(flsi)
             
@@ -168,14 +176,16 @@ class MyLifecycleClass:
     
     @modal.method()
     def run_concurrency(self,ls):
-        import cv2
-        from musetalk.utils.blending import get_image
-        import numpy as np
         import copy
-        from tqdm import tqdm
-        import pickle
         import os
+        import pickle
+
+        import cv2
+        import numpy as np
         import torch
+        from tqdm import tqdm
+
+        from musetalk.utils.blending import get_image
         print("pad talking image to original video")
         # print("size: ",os.system(f"du -sh res_frame_list")," MB")
         strt_index=ls[0]
