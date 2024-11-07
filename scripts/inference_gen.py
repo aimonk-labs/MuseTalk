@@ -17,15 +17,16 @@ import shutil
 from basicsr.utils import imwrite
 
 from gfpgan import GFPGANer
-
+from pathlib import Path
 
 # load model weights
 audio_processor, vae, unet, pe = load_all_model()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 timesteps = torch.tensor([0], device=device)
 device_gfpgan = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-model_path="/bv3/debasish_works/MuseTalk/GFPGANv1.4.pth" ##pass the path of the model where it is located
+GFPGAN_DIR = Path(os.path.dirname(os.path.abspath(__file__))).parent
+model_path=os.path.join(GFPGAN_DIR,"GFPGANv1.4.pth")
+print(f"GFPGAN_MODEL_PATH : {model_path}")
 bg_upsampler=None
 restorer = GFPGANer(
         model_path=model_path,
@@ -45,9 +46,9 @@ def get_filename(folder_path):
             # Delete the subfolder and its contents
             shutil.rmtree(item_path)
 
-    os.system(f"rm {folder_path}/*.avi")
-    os.system(f"rm {folder_path}/*Adam.mp4")
-    os.system(f"rm {folder_path}/*Lily.mp4")
+        os.system(f"rm {folder_path}/*.avi")
+        os.system(f"rm {folder_path}/*Adam.mp4")
+        os.system(f"rm {folder_path}/*Lily.mp4")
     i=[]
     for fl in os.listdir(folder_path):
         # os.remove(f"{folder_path}/{fl}.avi")
@@ -79,9 +80,9 @@ def main(args):
 
                 video_path=os.path.join(VIDEO_PATH,f_v_a)
                 if "male" in f_v_a:
-                    audio_path="/bv3/debasish_works/MuseTalk/audio/Adam.wav"
+                    audio_path="audio/Adam.wav"
                 else:
-                    audio_path="/bv3/debasish_works/MuseTalk/audio/Lily.wav"
+                    audio_path="audio/Lily.wav"
                 # audio_path="/bv3/debasish_works/MuseTalk/elevenlabs-2min-audio.wav"
                 # audio_path="/bv3/debasish_works/MuseTalk/Adam_enhanced.wav"
                 bbox_shift = args.bbox_shift
@@ -180,20 +181,18 @@ def main(args):
                         paste_back=True)
                     
                     cv2.imwrite(f"{result_img_save_path}/{str(i).zfill(8)}.png",restored_img)
-
                     # cv2.imwrite(f"{result_img_save_path}/{str(i).zfill(8)}.png",combine_frame)
-
-                cmd_img2video = f"ffmpeg -y -v warning -r {fps} -f image2 -i {result_img_save_path}/%08d.png -vcodec libx264 -vf format=rgb24,scale=out_color_matrix=bt709,format=yuv420p -crf 18 temp.mp4"
+                cmd_img2video = f"/usr/bin/ffmpeg -y -v warning -r {fps} -f image2 -i {result_img_save_path}/%08d.png -vcodec libx264 -vf format=rgb24,scale=out_color_matrix=bt709,format=yuv420p -crf 18 temp.mp4"
                 print(cmd_img2video)
                 os.system(cmd_img2video)
                 
-                cmd_combine_audio = f"ffmpeg -y -v warning -i {audio_path} -i temp.mp4 {output_vid_name}"
+                cmd_combine_audio = f"/usr/bin/ffmpeg -y -v warning -i {audio_path} -i temp.mp4 {output_vid_name}"
                 print(cmd_combine_audio)
                 os.system(cmd_combine_audio)
                 
                 os.remove("temp.mp4")
                 shutil.rmtree(result_img_save_path)
-                
+                shutil.rmtree(save_dir_full)
                 print(f"result is save to {output_vid_name}")
                 # os.system(f"python3 inference_video.py --input_video_path {output_vid_name} --folder_path {args.result_dir} --audio_path {audio_path}")
             except:
