@@ -9,6 +9,7 @@ import pickle
 from tqdm import tqdm
 import copy
 import sys
+from basetritonmodel import BaseTritonModel
 from pathlib import Path
 MuseTalk_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(MuseTalk_dir)
@@ -20,9 +21,10 @@ from musetalk.utils.utils import load_all_model
 import shutil
 import time
 from fast_gfpgan import FAST_GFGGaner
-from global_variable import FPS,BBOX_SHIFT,AVATAR_PRESAVES_DIR,BATCH_SIZE
+from MuseTalk.global_variable import FPS,BBOX_SHIFT,AVATAR_PRESAVES_DIR,BATCH_SIZE
 from bgremoval_package.demo.run import matting
 from bgremoval_package.demo.run import load_model as load_model_modenet
+from MuseTalk.AvatarFetch import get_avatars
 
 class MusetalkTritonInference:
     def __init__(self) -> None:
@@ -30,6 +32,7 @@ class MusetalkTritonInference:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.timesteps = torch.tensor([0], device=self.device)
         # model_path="/bv3/debasish_works/MuseTalk/GFPGANv1.4.pth"  # TODO: To be dynamic 
+        self.base_model = BaseTritonModel()
         model_path=os.path.join(CHECKPOINTS_DIR,"GFPGANv1.4.pth")
         self.gfpgan=FAST_GFGGaner(
             model_path=model_path,
@@ -38,6 +41,46 @@ class MusetalkTritonInference:
             channel_multiplier=2,
             bg_upsampler=None,device="cuda") 
         self.modnet=load_model_modenet()
+        from RVM import RVMVideoMatting
+        self.rvm=RVMVideoMatting(
+        model_type="mobilenetv3",  # or "resnet50"
+        model_path="/vidgen/VIDGEN_AI_CMPT_MODAL/vidgen_ai_cmpt/models/vidgen_editor/1/MuseTalk/rvm_mobilenetv3.pth",
+        device="cuda")
+        # self.create_presaves()
+    
+    def create_presaves(self):
+        # import pdb;pdb.set_trace()
+        avatars=get_avatars()
+        for avatar in avatars:
+            avatar_image_name = avatar["node"].get("poseVideo", "").get("url","")
+            avatar_name = os.path.basename(avatar_image_name).split(".")[0]
+            result_dir="/vidgen/VIDGEN_AI_CMPT_MODAL/vidgen_ai_cmpt/models/vidgen_editor/1/mcnet_predefined_avatar_videos"
+            output_avatar_video = os.path.join(result_dir, f"{avatar_name}.mp4")
+            if not os.path.exists(output_avatar_video):
+                self.base_model.s3_download(avatar["node"].get("poseVideo", "").get("url",""), output_avatar_video)
+            temp_dir="/vidgen/VIDGEN_AI_CMPT_MODAL/vidgen_ai_cmpt/models/vidgen_editor/1/MuseTalk/temp_dir"
+            output_basename=f"{avatar_name}_output"
+            input_img_list=self.read_avatar_pose_video(output_avatar_video,avatar_name,result_dir,output_basename)
+            pkl_save_folder_path=os.path.join(AVATAR_PRESAVES_DIR,"presaved_files",avatar_name)
+            if os.path.exists(pkl_save_folder_path):
+                pkl_flag=True
+            else:
+                os.makedirs(pkl_save_folder_path,exist_ok =True)
+                pkl_flag=False
+            
+            if not pkl_flag:
+                frame_list_cycle,coord_list_cycle,input_latent_list_cycle=self.extract_coordinate(input_img_list)
+                frame_list_cycle_save_path=os.path.join(pkl_save_folder_path,"frame_list_cycle")
+                with open(frame_list_cycle_save_path, 'wb') as f:     
+                    pickle.dump(frame_list_cycle, f)
+                coord_list_cycle_save_path=os.path.join(pkl_save_folder_path,"coord_list_cycle")
+                with open(coord_list_cycle_save_path, 'wb') as f:     
+                    pickle.dump(coord_list_cycle, f)
+                input_latent_list_cycle_save_path=os.path.join(pkl_save_folder_path,"input_latent_list_cycle")
+                with open(input_latent_list_cycle_save_path, 'wb') as f:     
+                    pickle.dump(input_latent_list_cycle, f)
+            else:
+                print("Presave Present")
 
     def read_avatar_pose_video(self,video_path,input_basename,result_dir,output_basename):
         # if output_vid_name is None:
@@ -129,7 +172,40 @@ class MusetalkTritonInference:
                 continue
             combine_frame = get_image(ori_frame,res_frame,bbox)
             _, _, frame = self.gfpgan.enhance(combine_frame, has_aligned=False, only_center_face=False, paste_back=True) ##applied GFPGAN
-            cv2.imwrite(f"{result_img_save_path}/{str(i).zfill(8)}.png",frame)
+            cv2.imwrite(f"{result_img_save_path}/{str(i).zfill(8)}.png",combine_frame)
+
+    # def blending_enhancer(self, res_frame_list, coord_list_cycle, frame_list_cycle, result_img_save_path):
+    #     print("Pad talking image to original video")
+
+    #     coord_len = len(coord_list_cycle)
+    #     frame_len = len(frame_list_cycle)
+
+    #     for i, res_frame in enumerate(tqdm(res_frame_list)):
+    #         coord_index = i % coord_len
+    #         frame_index = i % frame_len
+    #         bbox = coord_list_cycle[coord_index]
+    #         ori_frame = frame_list_cycle[frame_index]
+
+    #         x1, y1, x2, y2 = bbox
+
+    #         try:
+    #             res_frame = cv2.resize(res_frame.astype(np.uint8), (x2 - x1, y2 - y1))
+    #         except Exception as e:
+    #             print(f"Resize failed for bbox {bbox}, skipping. Error: {e}")
+    #             continue
+
+    #         combine_frame = get_image(ori_frame, res_frame, bbox)
+
+    #         # GFPGAN processing
+    #         try:
+    #             _, _, frame = self.gfpgan.enhance(
+    #                 combine_frame, has_aligned=False, only_center_face=False, paste_back=True
+    #             )
+    #         except Exception as e:
+    #             print(f"GFPGAN failed for frame {i}, skipping. Error: {e}")
+    #             continue
+
+    #         cv2.imwrite(f"{result_img_save_path}/{str(i).zfill(8)}.png", frame)
 
     def infer(self,video_path,audio_path,bg_removalflag,avatar_name,result_dir):
         input_basename = avatar_name
@@ -178,6 +254,9 @@ class MusetalkTritonInference:
     
         res_frame_list=self.renderer(whisper_chunks,input_latent_list_cycle,BATCH_SIZE,self.timesteps)
 
+        
+        # import cProfile
+        # cProfile.run('self.blending_enhancer(res_frame_list,coord_list_cycle,frame_list_cycle,result_img_save_path)')
         self.blending_enhancer(res_frame_list,coord_list_cycle,frame_list_cycle,result_img_save_path)
         
         cmd_img2video = f"ffmpeg -y -v warning -r {FPS} -f image2 -i {result_img_save_path}/%08d.png -vcodec libx264 -vf format=rgb24,scale=out_color_matrix=bt709,format=yuv420p -crf 18 {result_dir}/temp.mp4"
@@ -194,7 +273,14 @@ class MusetalkTritonInference:
         if bg_removalflag:
             output_path=os.path.join(result_dir,"matts")
             os.makedirs(output_path,exist_ok=True)
-            matting(output_vid_name,output_path,self.modnet)
+            # import cProfile
+            # cProfile.run('matting(output_vid_name,output_path,self.modnet)')
+            # matting(output_vid_name,output_path,self.modnet)
+            print("Start Matting.......")
+            self.rvm.convert_video(input_source=output_vid_name,
+                                   output_type="png_sequence",
+                                   output_composition=output_path)
+
             return output_path
         else:
             return output_vid_name
