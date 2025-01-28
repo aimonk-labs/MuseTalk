@@ -8,7 +8,7 @@ import glob
 import pickle
 from tqdm import tqdm
 import copy
-
+import subprocess
 from musetalk.utils.utils import get_file_type,get_video_fps,datagen
 from musetalk.utils.preprocessing import get_landmark_and_bbox,read_imgs,coord_placeholder
 from musetalk.utils.blending import get_image
@@ -26,6 +26,7 @@ timesteps = torch.tensor([0], device=device)
 device_gfpgan = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 GFPGAN_DIR = Path(os.path.dirname(os.path.abspath(__file__))).parent
 model_path=os.path.join(GFPGAN_DIR,"GFPGANv1.4.pth")
+shareable_link=""
 print(f"GFPGAN_MODEL_PATH : {model_path}")
 bg_upsampler=None
 restorer = GFPGANer(
@@ -56,7 +57,26 @@ def get_filename(folder_path):
         file_name=fl.split("_withaudio")[0]+"_withaudio.mp4"
         i.append(file_name)
     return i
+def upload_to_drive(local_folder, remote_folder):
+    """
+    Upload a folder to Google Drive using rclone and return a shareable link.
 
+    :param local_folder: Path to the local folder to upload.
+    :param remote_folder: Remote folder path on Google Drive.
+    :return: Shareable link for the uploaded folder.
+    """
+    # Ensure the remote folder exists
+    subprocess.run(["rclone", "mkdir", remote_folder], check=True)
+
+    # Upload files
+    subprocess.run(["rclone", "copy", local_folder, remote_folder, "--progress"], check=True)
+
+    # Get shareable link
+    result = subprocess.run(["rclone", "link", remote_folder], stdout=subprocess.PIPE, text=True, check=True)
+    shareable_link = result.stdout.strip()
+    print(f"Uploaded to: {remote_folder}")
+    print(f"Shareable link: {shareable_link}")
+    return shareable_link
 
 @torch.no_grad()
 def main(args):
@@ -79,7 +99,9 @@ def main(args):
             try:
 
                 video_path=os.path.join(VIDEO_PATH,f_v_a)
-                if "male" in f_v_a:
+                if "female" in f_v_a.lower():
+                    audio_path="audio/Lily.wav"
+                elif "male" in f_v_a.lower() or "boy" in f_v_a.lower() or "men" in f_v_a.lower() or "man" in f_v_a.lower():
                     audio_path="audio/Adam.wav"
                 else:
                     audio_path="audio/Lily.wav"
@@ -185,7 +207,6 @@ def main(args):
                 cmd_img2video = f"/usr/bin/ffmpeg -y -v warning -r {fps} -f image2 -i {result_img_save_path}/%08d.png -vcodec libx264 -vf format=rgb24,scale=out_color_matrix=bt709,format=yuv420p -crf 18 temp.mp4"
                 print(cmd_img2video)
                 os.system(cmd_img2video)
-                
                 cmd_combine_audio = f"/usr/bin/ffmpeg -y -v warning -i {audio_path} -i temp.mp4 {output_vid_name}"
                 print(cmd_combine_audio)
                 os.system(cmd_combine_audio)
@@ -195,9 +216,60 @@ def main(args):
                 shutil.rmtree(save_dir_full)
                 print(f"result is save to {output_vid_name}")
                 # os.system(f"python3 inference_video.py --input_video_path {output_vid_name} --folder_path {args.result_dir} --audio_path {audio_path}")
+                # break
             except:
                 print(f"Error in processing {f_v_a}")
                 continue
+    # import pdb;pdb.set_trace()
+    path = VIDEO_PATH
+
+    # Extract the parts using os.path.split 
+    folder2 = path.lstrip("/").rstrip("/").split("/")[1]
+    folder1 = os.path.basename(os.path.dirname(path))
+    folder_name=f"Musetalk_GFPGAN_{folder2}_{folder1}_output"
+    shareable_link = upload_to_drive("silence_output_3/",f"avatar-folder-access:/{folder_name}")
+    return shareable_link
+
+def run_musetalk(
+    inference_config="configs/inference/test_img.yaml",
+    bbox_shift=0,
+    result_dir='./results',
+    input_video_folder="/bv3/debasish_works/inpust_musetalk",
+    fps=25,
+    batch_size=8,
+    output_vid_name=None,
+    use_saved_coord=False,
+    use_float16=False
+):
+    """
+    Runs the MuseTalk processing pipeline with specified parameters.
+
+    Parameters:
+        inference_config (str): Path to the inference config file.
+        bbox_shift (int): Bounding box shift for face cropping.
+        result_dir (str): Directory to save results.
+        input_video_folder (str): Folder containing input videos.
+        fps (int): Frames per second for output video.
+        batch_size (int): Batch size for inference.
+        output_vid_name (str): Name of the output video file.
+        use_saved_coord (bool): Whether to use saved coordinates for cropping.
+        use_float16 (bool): Whether to use float16 precision to speed up inference.
+    """
+    args = argparse.Namespace(
+        inference_config=inference_config,
+        bbox_shift=bbox_shift,
+        result_dir=result_dir,
+        input_video_folder=input_video_folder,
+        fps=fps,
+        batch_size=batch_size,
+        output_vid_name=output_vid_name,
+        use_saved_coord=use_saved_coord,
+        use_float16=use_float16
+    )
+
+    os.makedirs(args.result_dir, exist_ok=True)
+    shareable_link=main(args)
+    return shareable_link
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--inference_config", type=str, default="configs/inference/test_img.yaml")
