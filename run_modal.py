@@ -1,10 +1,9 @@
 
 import modal
 from modal import App, Image, Stub, enter, gpu, method
-
-stub = App("vidgen-musetalk-modal-3")
-volume = modal.Volume.from_name("my-test-volume")
-dockerfile_image = Image.from_dockerfile("docker/Dockerfile.modal")
+stub = App("take0-musetalk-modal")
+volume = modal.Volume.from_name("take0-modal-volume")
+dockerfile_image = Image.from_dockerfile("/vidgen/VIDGEN_AI_CMPT_MODAL/vidgen_ai_cmpt/models/vidgen_editor/1/MuseTalk/docker/Dockerfile.modal")
 
 @stub.cls(image=dockerfile_image,gpu=gpu.A100(count=1,size="40GB"),timeout=360*2,concurrency_limit=10,volumes={"/root/musetalk": volume})
 class MyLifecycleClass:
@@ -19,6 +18,10 @@ class MyLifecycleClass:
         print("succesfully ffmpeg")
         from fast_gfpgan import FAST_GFGGaner
         from musetalk.utils.utils import load_all_model
+        from bgremoval_package.demo.run import single_frame_matting
+        self.matting_frame=single_frame_matting
+        from bgremoval_package.demo.run import load_model as load_model_modnet
+        self.modnet=load_model_modnet(model_path="./modnet_webcam_portrait_matting.ckpt")
         self.audio_processor, self.vae, self.unet, self.pe = load_all_model()
         import torch
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -30,6 +33,11 @@ class MyLifecycleClass:
             arch="clean",
             channel_multiplier=2,
             bg_upsampler=None,device="cuda")
+        from RVM import RVMVideoMatting
+        self.rvm=RVMVideoMatting(
+        model_type="resnet50",  # or "resnet50"
+        model_path="rvm_resnet50.pth",
+        device="cuda") 
         self.var = "hello world"
 
     @modal.method()
@@ -119,6 +127,7 @@ class MyLifecycleClass:
                 print("start inference")
                 # video_num = len(whisper_chunks)
                 batch_size = 8
+                print("Batch Size: ",batch_size)
 
                 gen = list(datagen(whisper_chunks,input_latent_list_cycle,batch_size))
                 gen_save_path=os.path.join(pkl_save_folder_path,"gen")
@@ -161,6 +170,7 @@ class MyLifecycleClass:
                 print("start inference")
                 # video_num = len(whisper_chunks)
                 batch_size = 8
+                print("Batch Size: ",batch_size)
                 
                 gen = list(datagen(whisper_chunks,input_latent_list_cycle,batch_size))
                 gen_save_path=os.path.join(pkl_save_folder_path,"gen")
@@ -191,6 +201,7 @@ class MyLifecycleClass:
         strt_index=ls[0]
         end_index=ls[1]
         input_basename=ls[2]
+
 
         pkl_save_folder_path=os.path.join("/root/musetalk/","presaved_files",input_basename)
         frame_list_cycle_save_path=os.path.join(pkl_save_folder_path,"frame_list_cycle")
@@ -229,8 +240,10 @@ class MyLifecycleClass:
                     res_frame = cv2.resize(res_frame.astype(np.uint8),(x2-x1,y2-y1))
                 except:
                     continue
-                combine_frame = get_image(ori_frame,res_frame,bbox,True)
+                combine_frame = get_image(ori_frame,res_frame,bbox)
                 _, _, frame = self.gfpgan.enhance(combine_frame, has_aligned=False, only_center_face=False, paste_back=True)
+                # frame=self.matting_frame(frame=frame,modnet=self.modnet)
+                frame=self.rvm.process_single_frame(frame)
                 f_arr.append(frame)
 
         return f_arr

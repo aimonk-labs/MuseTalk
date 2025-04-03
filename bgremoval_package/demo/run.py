@@ -10,7 +10,7 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 from pathlib import Path
 try:
-    from IP_LAP.bgremoval_package.src.models.modnet import MODNet
+    from MuseTalk.bgremoval_package.src.models.modnet import MODNet
 except:
     # import sys
     # print(os.path.join(os.path.dirname(__file__),".."))
@@ -34,8 +34,14 @@ torch_transforms = transforms.Compose(
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ]
 )
-def load_model():
-    
+def load_model(model_path=None):
+    if model_path:
+        print(model_path)
+    else:
+        filepath = os.path.dirname(os.path.abspath(__file__))
+        CKPT_FOLDER = Path(filepath).parent.parent.parent
+        PRETRAINED_CKPT = os.path.join(CKPT_FOLDER,"checkpoints/bgremoval/modnet_webcam_portrait_matting.ckpt")
+        model_path=PRETRAINED_CKPT
     modnet = MODNet(backbone_pretrained=False)
     modnet = nn.DataParallel(modnet)
 
@@ -43,10 +49,10 @@ def load_model():
     if GPU:
         print('Use GPU...')
         modnet = modnet.cuda()
-        modnet.load_state_dict(torch.load(PRETRAINED_CKPT))
+        modnet.load_state_dict(torch.load(model_path))
     else:
         print('Use CPU...')
-        modnet.load_state_dict(torch.load(PRETRAINED_CKPT, map_location=torch.device('cpu')))
+        modnet.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
     modnet.eval()
     return modnet
 
@@ -99,6 +105,193 @@ def matting_list(video,output_folder):
         four_channel_frame = np.dstack((view_np, view_np_alpha))
         output_path = os.path.join(output_folder, f'output_{c:04d}.png')
         cv2.imwrite(output_path, four_channel_frame)
+
+# def refine_alpha(alpha_channel, kernel_size=5):
+#     """
+#     Refine the alpha channel by applying erosion to smooth out rough edges.
+#     """
+#     kernel = np.ones((kernel_size, kernel_size), np.uint8)
+#     refined_alpha = cv2.erode(alpha_channel, kernel, iterations=1)
+#     return refined_alpha
+
+# def apply_feathering(image, alpha_channel, blur_radius=5):
+#     """
+#     Apply Gaussian blur to the background areas based on the alpha channel.
+#     """
+#     blurred_image = cv2.GaussianBlur(image, (blur_radius, blur_radius), 0)
+#     # Ensure alpha_channel is single channel
+#     if len(alpha_channel.shape) > 2:
+#         alpha_channel = alpha_channel[:, :, 0]
+    
+#     # Create inverse mask
+#     inv_alpha = cv2.bitwise_not(alpha_channel)
+    
+#     # Masked blend
+#     blended_image = cv2.bitwise_and(image, image, mask=alpha_channel)
+#     blended_background = cv2.bitwise_and(blurred_image, blurred_image, mask=inv_alpha)
+#     return cv2.add(blended_image, blended_background)
+
+# def smooth_alpha_channel(alpha_channel, sigma=1):
+#     """
+#     Apply Gaussian smoothing to the alpha channel to smooth edges.
+#     """
+#     # Ensure alpha_channel is single channel
+#     if len(alpha_channel.shape) > 2:
+#         alpha_channel = alpha_channel[:, :, 0]
+#     return cv2.GaussianBlur(alpha_channel, (5, 5), sigma)
+
+# def single_frame_matting(frame, modnet, output_path=None, rw=512, rh=512):
+#     """
+#     Perform image matting on a single frame using MODNet.
+#     Args:
+#     - frame (numpy.ndarray): Input image frame
+#     - output_path (str): Path to save the output image
+#     - modnet (torch.nn.Module): Trained MODNet model
+#     - rw (int): Resize width (default 512)
+#     - rh (int): Resize height (default 512)
+#     Returns:
+#     - four_channel_frame (numpy.ndarray): Frame with alpha channel
+#     """
+#     # Ensure GPU is used if available
+#     GPU = torch.cuda.is_available()
+
+#     # Get original frame dimensions
+#     h, w = frame.shape[:2]
+
+#     # Resize frame maintaining aspect ratio
+#     if w >= h:
+#         rh = 512
+#         rw = int(w / h * 512)
+#     else:
+#         rw = 512
+#         rh = int(h / w * 512)
+
+#     # Ensure dimensions are divisible by 32
+#     rh = rh - rh % 32
+#     rw = rw - rw % 32
+
+#     # Convert to RGB and resize
+#     frame_np = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+#     frame_np = cv2.resize(frame_np, (rw, rh), cv2.INTER_AREA)
+
+#     # Convert to PIL Image and apply transforms
+#     frame_PIL = Image.fromarray(frame_np)
+#     frame_tensor = torch_transforms(frame_PIL)
+#     frame_tensor = frame_tensor[None, :, :, :]
+
+#     # Move to GPU if available
+#     if GPU:
+#         frame_tensor = frame_tensor.cuda()
+
+#     # Perform matting
+#     with torch.no_grad():
+#         # Run MODNet inference
+#         _, _, matte_tensor = modnet(frame_tensor, True)
+        
+#         # Convert matte to numpy (single channel)
+#         matte_np = matte_tensor[0, 0].data.cpu().numpy()
+        
+#         # Resize matte to original dimensions
+#         matte_np = cv2.resize(matte_np, (w, h))
+        
+#         # Create alpha channel (single channel)
+#         alpha_channel = (matte_np * 255).astype(np.uint8)
+        
+#         # Refine the alpha channel
+#         alpha_channel = refine_alpha(alpha_channel, kernel_size=5)
+        
+#         # Resize original frame to match dimensions
+#         frame_resized = cv2.resize(frame, (w, h))
+        
+#         # Apply feathering
+#         matted_frame = apply_feathering(frame_resized, alpha_channel)
+        
+#         # Smooth the alpha channel
+#         alpha_channel = smooth_alpha_channel(alpha_channel)
+        
+#         # Create 4-channel frame (BGR + Alpha)
+#         four_channel_frame = np.dstack((matted_frame, alpha_channel))
+
+#         # Save the output image if path provided
+#         if output_path:
+#             cv2.imwrite(output_path, four_channel_frame)
+
+#         return four_channel_frame
+def single_frame_matting(frame, modnet,output_path=None,rw=512, rh=512):
+    """
+    Perform image matting on a single frame using MODNet.
+    
+    Args:
+    - frame (numpy.ndarray): Input image frame
+    - output_path (str): Path to save the output image
+    - modnet (torch.nn.Module): Trained MODNet model
+    - rw (int): Resize width (default 512)
+    - rh (int): Resize height (default 512)
+    
+    Returns:
+    - four_channel_frame (numpy.ndarray): Frame with alpha channel
+    """
+    # Ensure GPU is used if available
+    GPU = torch.cuda.is_available()
+    
+    # Get original frame dimensions
+    h, w = frame.shape[:2]
+    
+    # Resize frame maintaining aspect ratio
+    if w >= h:
+        rh = 512
+        rw = int(w / h * 512)
+    else:
+        rw = 512
+        rh = int(h / w * 512)
+    
+    # Ensure dimensions are divisible by 32
+    rh = rh - rh % 32
+    rw = rw - rw % 32
+    
+    # Convert to RGB and resize
+    frame_np = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    frame_np = cv2.resize(frame_np, (rw, rh), cv2.INTER_AREA)
+    
+    # Convert to PIL Image and apply transforms
+    frame_PIL = Image.fromarray(frame_np)
+    frame_tensor = torch_transforms(frame_PIL)
+    frame_tensor = frame_tensor[None, :, :, :]
+    
+    # Move to GPU if available
+    if GPU:
+        frame_tensor = frame_tensor.cuda()
+    
+    # Perform matting
+    with torch.no_grad():
+        # Run MODNet inference
+        _, _, matte_tensor = modnet(frame_tensor, True)
+        matte_tensor = matte_tensor.repeat(1, 3, 1, 1)
+        
+        # Convert matte to numpy
+        matte_np = matte_tensor[0].data.cpu().numpy().transpose(1, 2, 0)
+        
+        # Create alpha channel
+        view_np_alpha = matte_np * np.full(frame_np.shape, 255.0)
+        view_np_alpha = cv2.cvtColor(view_np_alpha.astype(np.uint8), cv2.COLOR_RGB2BGR)
+        view_np_alpha = cv2.resize(view_np_alpha, (w, h))
+        
+        # Create matted image with white background
+        view_np = matte_np * frame_np + (1 - matte_np) * np.full(frame_np.shape, 255.0)
+        view_np = cv2.cvtColor(view_np.astype(np.uint8), cv2.COLOR_RGB2BGR)
+        view_np = cv2.resize(view_np, (w, h))
+        
+        # Extract alpha channel (green channel)
+        view_np_alpha = view_np_alpha[:,:,1]
+        
+        # Create 4-channel frame (RGB + Alpha)
+        four_channel_frame = np.dstack((view_np, view_np_alpha))
+    
+    # Save the output image
+    if output_path:
+        cv2.imwrite(output_path, four_channel_frame)
+    
+    return four_channel_frame
 
 
 def matting(video,output_folder,modnet, alpha_matte=False, fps=25,MODAL_FLAG=False):

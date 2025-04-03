@@ -9,3 +9,4 @@ results/
 data/audio/*.wav
 data/video/*.mp4
 run_modal_reference.py
+*.pth

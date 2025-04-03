@@ -1,6 +1,8 @@
 import torch
 from RobustVideoMatting.model import MattingNetwork
 from RobustVideoMatting.inference import convert_video
+from torchvision.transforms import ToTensor
+import numpy as np
 
 class RVMVideoMatting:
     def __init__(self, model_type="mobilenetv3", model_path="rvm_mobilenetv3.pth", device="cuda"):
@@ -14,6 +16,7 @@ class RVMVideoMatting:
         """
         self.device = device if torch.cuda.is_available() else "cpu"
         self.model_type = model_type
+        self.rec = [None] * 4
 
         # Initialize model based on type
         if model_type == "mobilenetv3":
@@ -38,6 +41,25 @@ class RVMVideoMatting:
         except Exception as e:
             print(f"Error loading model weights: {e}")
             raise
+    def process_single_frame(self, image, downsample_ratio=0.5):
+        """
+        Process a single frame using RVM with temporal memory.
+        Maintains internal recurrent states to preserve temporal consistency.
+        """
+        from torchvision.transforms import ToTensor
+        import numpy as np
+
+        transform = ToTensor()
+        src = transform(image).unsqueeze(0).to(self.device)
+
+        with torch.no_grad():
+            fgr, pha, *self.rec = self.model(src, *self.rec, downsample_ratio=downsample_ratio)
+
+        foreground = (fgr[0].cpu().numpy().transpose(1, 2, 0) * 255).astype(np.uint8)
+        alpha = (pha[0].cpu().numpy().transpose(1, 2, 0) * 255).astype(np.uint8)
+        rgba = np.dstack((foreground, alpha))
+
+        return rgba
 
     def convert_video(
         self, 
@@ -47,8 +69,8 @@ class RVMVideoMatting:
         output_alpha=None, 
         output_foreground=None, 
         output_video_mbps=6, 
-        downsample_ratio=1, 
-        seq_chunk=32
+        downsample_ratio=None, 
+        seq_chunk=16
     ):
         """
         Convert a video or image sequence to apply RVM matting.
@@ -89,15 +111,11 @@ if __name__ == "__main__":
         model_path="rvm_resnet50.pth",  # Provide the path to ResNet50 weights
         device="cuda"
     )
+    import cv2
+    image = cv2.imread('asian_60_male_2.png')
 
-    # Convert video with matting applied
-    video_matting.convert_video(
-        input_source="input.mp4",
-        output_type="video",
-        output_composition="com.mp4",
-        output_alpha="pha.mp4",
-        output_foreground="fgr.mp4",
-        output_video_mbps=4,
-        downsample_ratio=None,
-        seq_chunk=12
-    )
+    # Process the image
+    rgba = video_matting.process_single_frame(image)
+    cv2.imwrite('rgba_test.png', rgba)
+
+    

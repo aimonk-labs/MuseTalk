@@ -21,10 +21,11 @@ from musetalk.utils.utils import load_all_model
 import shutil
 import time
 from fast_gfpgan import FAST_GFGGaner
-from MuseTalk.global_variable import FPS,BBOX_SHIFT,AVATAR_PRESAVES_DIR,BATCH_SIZE
-from bgremoval_package.demo.run import matting
-from bgremoval_package.demo.run import load_model as load_model_modenet
+from MuseTalk.global_variable import FPS,BBOX_SHIFT,AVATAR_PRESAVES_DIR,BATCH_SIZE,AUDIO_THRESHOLD_SECONDS
+from MuseTalk.bgremoval_package.demo.run import matting
+from MuseTalk.bgremoval_package.demo.run import load_model as load_model_modenet
 from MuseTalk.AvatarFetch import get_avatars
+from MuseTalk.run_modal_script import process_video_with_modal
 
 class MusetalkTritonInference:
     def __init__(self) -> None:
@@ -140,13 +141,29 @@ class MusetalkTritonInference:
         coord_list_cycle = coord_list + coord_list[::-1]
         input_latent_list_cycle = input_latent_list + input_latent_list[::-1]
         return frame_list_cycle,coord_list_cycle,input_latent_list_cycle
-
+    def wait_for_gpu_memory(self,required_memory, device, check_interval=5):
+        """
+        Waits until sufficient GPU memory is available.
+        
+        :param required_memory: The memory required in MB.
+        :param device: The target GPU device.
+        :param check_interval: Time interval (in seconds) to wait before checking again.
+        """
+        while True:
+            free_memory = torch.cuda.mem_get_info(device)[0] / (1024 ** 2)  # Free memory in MB
+            if free_memory >= required_memory:
+                break
+            print(f"Insufficient GPU memory: {free_memory:.2f} MB available, {required_memory} MB needed. Retrying in {check_interval}s...")
+            time.sleep(check_interval)
     def renderer(self,whisper_chunks,input_latent_list_cycle,batch_size,timesteps):
+        # import pdb;pdb.set_trace()
         video_num = len(whisper_chunks)
-        batch_size = batch_size
+        # batch_size = batch_size
+        batch_size = 1
         gen = datagen(whisper_chunks,input_latent_list_cycle,batch_size)
         res_frame_list = []
         for i, (whisper_batch,latent_batch) in enumerate(tqdm(gen,total=int(np.ceil(float(video_num)/batch_size)))):
+            
             audio_feature_batch = torch.from_numpy(whisper_batch)
             audio_feature_batch = audio_feature_batch.to(device=self.unet.device,
                                                         dtype=self.unet.model.dtype) # torch, B, 5*N,384
@@ -172,7 +189,7 @@ class MusetalkTritonInference:
                 continue
             combine_frame = get_image(ori_frame,res_frame,bbox)
             _, _, frame = self.gfpgan.enhance(combine_frame, has_aligned=False, only_center_face=False, paste_back=True) ##applied GFPGAN
-            cv2.imwrite(f"{result_img_save_path}/{str(i).zfill(8)}.png",combine_frame)
+            cv2.imwrite(f"{result_img_save_path}/{str(i).zfill(8)}.png",frame)
 
     # def blending_enhancer(self, res_frame_list, coord_list_cycle, frame_list_cycle, result_img_save_path):
     #     print("Pad talking image to original video")
@@ -207,65 +224,81 @@ class MusetalkTritonInference:
 
     #         cv2.imwrite(f"{result_img_save_path}/{str(i).zfill(8)}.png", frame)
 
-    def infer(self,video_path,audio_path,bg_removalflag,avatar_name,result_dir):
+    def infer(self,video_path,audio_path,bg_removalflag,avatar_name,result_dir,audio_duration):
+        # import pdb;pdb.set_trace()
+        
         input_basename = avatar_name
         audio_basename  = os.path.basename(audio_path).split('.')[0]
         output_basename = f"{input_basename}_{audio_basename}"
         result_img_save_path = os.path.join(result_dir, output_basename) # related to video & audio inputs
         output_vid_name=os.path.join(result_dir,f"{output_basename}_enhanced_audio.mp4")
-        # crop_coord_save_path = os.path.join(result_img_save_path, input_basename+".pkl") # only related to video input
-        os.makedirs(result_img_save_path,exist_ok =True)
-
-        input_img_list=self.read_avatar_pose_video(video_path,input_basename,result_dir,output_basename)
-        whisper_chunks=self.read_audio_features(audio_path)
-
-        pkl_save_folder_path=os.path.join(AVATAR_PRESAVES_DIR,"presaved_files",input_basename)
-        if os.path.exists(pkl_save_folder_path):
-            pkl_flag=True
-        else:
-            os.makedirs(pkl_save_folder_path,exist_ok =True)
-            pkl_flag=False
-        
-        if not pkl_flag:
-            frame_list_cycle,coord_list_cycle,input_latent_list_cycle=self.extract_coordinate(input_img_list)
-            frame_list_cycle_save_path=os.path.join(pkl_save_folder_path,"frame_list_cycle")
-            with open(frame_list_cycle_save_path, 'wb') as f:     
-                pickle.dump(frame_list_cycle, f)
-            coord_list_cycle_save_path=os.path.join(pkl_save_folder_path,"coord_list_cycle")
-            with open(coord_list_cycle_save_path, 'wb') as f:     
-                pickle.dump(coord_list_cycle, f)
-            input_latent_list_cycle_save_path=os.path.join(pkl_save_folder_path,"input_latent_list_cycle")
-            with open(input_latent_list_cycle_save_path, 'wb') as f:     
-                pickle.dump(input_latent_list_cycle, f)
-        else:
-            frame_list_cycle_save_path=os.path.join(pkl_save_folder_path,"frame_list_cycle")
-            coord_list_cycle_save_path=os.path.join(pkl_save_folder_path,"coord_list_cycle")
-            input_latent_list_cycle_save_path=os.path.join(pkl_save_folder_path,"input_latent_list_cycle")
+        # AUDIO_THRESHOLD_SECONDS=120.0
+        if audio_duration<=AUDIO_THRESHOLD_SECONDS:
+        # if True:
             
-            with open(frame_list_cycle_save_path,'rb') as flsi:
-                frame_list_cycle = pickle.load(flsi)
-        
-            with open(coord_list_cycle_save_path,'rb') as flsi:
-                coord_list_cycle = pickle.load(flsi)
+            # crop_coord_save_path = os.path.join(result_img_save_path, input_basename+".pkl") # only related to video input
+            os.makedirs(result_img_save_path,exist_ok =True)
 
-            with open(input_latent_list_cycle_save_path,'rb') as flsi:
-                input_latent_list_cycle = pickle.load(flsi)
+            input_img_list=self.read_avatar_pose_video(video_path,input_basename,result_dir,output_basename)
+            whisper_chunks=self.read_audio_features(audio_path)
 
-    
-        res_frame_list=self.renderer(whisper_chunks,input_latent_list_cycle,BATCH_SIZE,self.timesteps)
+            pkl_save_folder_path=os.path.join(AVATAR_PRESAVES_DIR,"presaved_files",input_basename)
+            if os.path.exists(pkl_save_folder_path):
+                pkl_flag=True
+            else:
+                os.makedirs(pkl_save_folder_path,exist_ok =True)
+                pkl_flag=False
+            
+            if not pkl_flag:
+                frame_list_cycle,coord_list_cycle,input_latent_list_cycle=self.extract_coordinate(input_img_list)
+                frame_list_cycle_save_path=os.path.join(pkl_save_folder_path,"frame_list_cycle")
+                with open(frame_list_cycle_save_path, 'wb') as f:     
+                    pickle.dump(frame_list_cycle, f)
+                coord_list_cycle_save_path=os.path.join(pkl_save_folder_path,"coord_list_cycle")
+                with open(coord_list_cycle_save_path, 'wb') as f:     
+                    pickle.dump(coord_list_cycle, f)
+                input_latent_list_cycle_save_path=os.path.join(pkl_save_folder_path,"input_latent_list_cycle")
+                with open(input_latent_list_cycle_save_path, 'wb') as f:     
+                    pickle.dump(input_latent_list_cycle, f)
+            else:
+                frame_list_cycle_save_path=os.path.join(pkl_save_folder_path,"frame_list_cycle")
+                coord_list_cycle_save_path=os.path.join(pkl_save_folder_path,"coord_list_cycle")
+                input_latent_list_cycle_save_path=os.path.join(pkl_save_folder_path,"input_latent_list_cycle")
+                
+                with open(frame_list_cycle_save_path,'rb') as flsi:
+                    frame_list_cycle = pickle.load(flsi)
+            
+                with open(coord_list_cycle_save_path,'rb') as flsi:
+                    coord_list_cycle = pickle.load(flsi)
+
+                with open(input_latent_list_cycle_save_path,'rb') as flsi:
+                    input_latent_list_cycle = pickle.load(flsi)
 
         
-        # import cProfile
-        # cProfile.run('self.blending_enhancer(res_frame_list,coord_list_cycle,frame_list_cycle,result_img_save_path)')
-        self.blending_enhancer(res_frame_list,coord_list_cycle,frame_list_cycle,result_img_save_path)
-        
-        cmd_img2video = f"ffmpeg -y -v warning -r {FPS} -f image2 -i {result_img_save_path}/%08d.png -vcodec libx264 -vf format=rgb24,scale=out_color_matrix=bt709,format=yuv420p -crf 18 {result_dir}/temp.mp4"
-        print(cmd_img2video)
-        os.system(cmd_img2video)
-        
-        cmd_combine_audio = f"ffmpeg -y -v warning -i {audio_path} -i {result_dir}/temp.mp4 {output_vid_name}"
-        print(cmd_combine_audio)
-        os.system(cmd_combine_audio)
+            res_frame_list=self.renderer(whisper_chunks,input_latent_list_cycle,BATCH_SIZE,self.timesteps)
+
+            
+            # import cProfile
+            # cProfile.run('self.blending_enhancer(res_frame_list,coord_list_cycle,frame_list_cycle,result_img_save_path)')
+            self.blending_enhancer(res_frame_list,coord_list_cycle,frame_list_cycle,result_img_save_path)
+            
+            cmd_img2video = f"ffmpeg -y -v warning -r {FPS} -f image2 -i {result_img_save_path}/%08d.png -vcodec libx264 -vf format=rgb24,scale=out_color_matrix=bt709,format=yuv420p -crf 18 {result_dir}/temp.mp4"
+            print(cmd_img2video)
+            os.system(cmd_img2video)
+            
+            cmd_combine_audio = f"ffmpeg -y -v warning -i {audio_path} -i {result_dir}/temp.mp4 {output_vid_name}"
+            print(cmd_combine_audio)
+            os.system(cmd_combine_audio)
+            print(output_vid_name)
+            # import pdb;pdb.set_trace()
+        else:
+            output_path=os.path.join(result_dir,"matts")
+            os.makedirs(output_path,exist_ok=True)
+            # import pdb;pdb.set_trace()
+            process_video_with_modal(video_path=video_path,audio_path=audio_path,final_video_path=output_vid_name,result_path=output_path)
+            print(output_vid_name)
+            print(output_path)
+            return output_path
         
         # os.remove("temp.mp4")
         # shutil.rmtree(result_img_save_path)

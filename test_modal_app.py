@@ -28,8 +28,8 @@ print("Define time 1 : ", time.time()-st_1)
 st_2 = time.time()
 a_obj = a()
 print("Define time 2 : ", time.time()-st_2)
-video_path = "data/video/asian_30_male_1_brian_cox_3min_512x512_2_1034_withaudio.mp4"
-audio_path = "data/audio/elevenlabs-2min-audio.wav"
+video_path = "data/video/SmartCasual_Joshua_Brown_american_male_30_casual_brian_cox_50sec_512x512_2_0837_withaudio_Adam_gfgan_audio.mp4"
+audio_path = "data/audio/3dad29a2-f7c0-4360-bb59-1938e48cda51_2024-12-2_9-14-34.wav"
 print("Test4")
 # a_obj.test2.remote()
 st_3 = time.time()
